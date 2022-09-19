@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const terraformUserRouter = require('./routes/terraformUser');
 const terraformRouter = require('./routes/terraform');
 const appointmentRouter = require('./routes/appointments')
+const http = require("http");
 
 require('dotenv').config();
 
@@ -17,43 +18,70 @@ app.use(cors(
     }
 ));
 
-// Routes
-app.use('/terraformUser', terraformUserRouter);
-app.use('/terraform', terraformRouter);
-app.use('/appointments', appointmentRouter);
 
-const port = process.env.PORT || 5000;
+let port = process.env.PORT || 5000;
 let uri = '';
-process.env.NODE_ENV = 'test' ? uri = process.env.ATLAS_URI_TEST : uri = process.env.ATLAS_URI;
+process.env.NODE_ENV === 'test' ? uri = process.env.ATLAS_URI_TEST : uri = process.env.ATLAS_URI;
+
 
 mongoose.connect(uri, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true, useFindAndModify: false}, (err) => {
     if (!err) {
         console.log("Connection to database Successful!!");
     }
+    else{
+        console.error("ERR: DB unavailable");
+    }
 });
 
-function getCurrentTime() {
-    const date = new Date();
-    console.log(date)
+// Port setup
+const normPort = (val) => {
+    let port = parseInt(val, 10);
+    if (isNaN(port)) {
+        return val;
+    }
+    if (port >= 0) {
+        return port;
+    }
+    return false;
+};
+
+const onError = (error) => {
+    if (error.syscall !== "listen") {
+    throw error;
 }
+const bind = typeof port === "string" ? "pipe " + port : "port " + port;
+switch (error.code) {
+    case "EACCES":
+        console.error(bind + " requires elevated privileges");
+        process.exit(1);
+        case "EADDRINUSE":
+            console.error(bind + " is already in use");
+            process.exit(1);
+            default:
+                throw error;
+            }
+        };
+        
+const onListening = () => {
+    const addr = server.address();
+    const bind = typeof port === "string" ? "pipe " + port : "port " + port;
+};
+        
+port = normPort(port);
+app.set("port", port);
 
-function getEndDateTime(dateTime) {
-    const hrs = (parseInt(dateTime.split('T')[1].split(':')[0]) + 1).toString().padStart(2, '0')
-    const time = hrs + ':00:00'
-    const date = dateTime.split('T')[0]
-    
-    return date + 'T' + time
-}
+const server = http.createServer(app);
+server.on("error", onError);
+server.on("listening", onListening);
+server.listen(port, () => {
+    console.log(`Server started on port ${port}`);
+});
 
-app.listen(port, () => {
-    console.log(`Listening on port ${port}`)
-    console.log(`NODE_ENV = ${process.env.NODE_ENV}`)
-    getCurrentTime();
-    getEndDateTime("2022-10-22T09:00:00")
-})
-
+// Routes
+app.use('/terraformUser', terraformUserRouter);
+app.use('/terraform', terraformRouter);
+app.use('/appointments', appointmentRouter);
 app.get('/', (req, res) => {
     res.status(200).json("Hello");
 })
-
-module.exports = app;
+        

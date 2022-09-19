@@ -1,11 +1,28 @@
 require('dotenv').config();
+const bcrypt = require("bcrypt")
+const SALT_ROUND=10;
 
-function hash(plainTextPass, salt) {
-    return (plainTextPass + "," + salt).split(',')[0]
+
+/**
+ * 
+ * @param {String} plainTextPass 
+ * @returns {String}
+ */
+const hash = async(plainTextPass)=>{
+    const salt = await bcrypt.genSalt(SALT_ROUND);
+    const hashed = await bcrypt.hash(plainTextPass,salt);
+    return hashed;
 }
 
-function compare(encryptedPass, actualPass) {
-    return hash(encryptedPass, process.env.PASSWORD_SALT) == actualPass;
+/**
+ * 
+ * @param {String} encryptedPass 
+ * @param {String} actualPass 
+ * @returns {Boolean}
+ */
+const compare=async(encryptedPass, actualPass)=>{
+  isValid = await bcrypt.compare(actualPass,encryptedPass); 
+  return isValid;  
 }
 
 module.exports = {

@@ -44,7 +44,7 @@ const Terraform = mongoose.model('Terraform', terraformSchema);
 const Slot = mongoose.model('Slot', slotSchema);
 const DateSchedule = mongoose.model('DateSchedule', dateSchedule);
 module.exports = {
-    Doctor,
+    Terraform,
     Slot,
     DateSchedule
 };
